@@ -42,8 +42,8 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Fitur', href: '#features' },
     { name: 'Dashboard', href: '#preview' },
-    { name: 'Benefit', href: '#benefits' },
     { name: 'Harga', href: '#pricing' },
+    { name: 'FAQ', href: '#faq' },
   ];
 
   return (
@@ -458,6 +458,129 @@ const Footer = () => {
   );
 }
 
+const Pricing = () => {
+  const plans = [
+    {
+      name: "Starter",
+      price: "0",
+      desc: "Perfect for new local businesses getting started.",
+      features: [
+        "10 AI Generations / month",
+        "1 Social Account connect",
+        "Basic Analytics",
+        "Standard Support",
+        "Manual Content Scheduling"
+      ],
+      cta: "Mulai Gratis",
+      popular: false,
+      color: "blue"
+    },
+    {
+      name: "Pro",
+      price: "199k",
+      desc: "Best for growing UMKM needing automation.",
+      features: [
+        "Unlimited AI Generations",
+        "5 Social Accounts connect",
+        "WhatsApp Broadcast (1k/mo)",
+        "Priority AI Processing",
+        "Competitor Tracking (3)",
+        "Auto-scheduling Engine"
+      ],
+      cta: "Pilih Pro",
+      popular: true,
+      color: "indigo"
+    },
+    {
+      name: "Enterprise",
+      price: "499k",
+      desc: "Maximum power for established brands.",
+      features: [
+        "Unlimited Everything",
+        "Unlimited Social Accounts",
+        "Custom AI Brand Voice",
+        "24/7 Priority Support",
+        "Full CRM Integration",
+        "Advanced Ads Optimization"
+      ],
+      cta: "Hubungi Kami",
+      popular: false,
+      color: "slate"
+    }
+  ];
+
+  return (
+    <section id="pricing" className="py-32 bg-slate-50/50 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-linear-to-r from-transparent via-slate-200 to-transparent" />
+      
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-20">
+          <h2 className="text-blue-600 font-bold text-sm uppercase tracking-[0.3em] mb-5">Subscription</h2>
+          <h3 className="text-4xl lg:text-6xl font-display font-bold text-slate-900 mb-6">Investasikan <span className="text-gradient">Pertumbuhan</span> Anda.</h3>
+          <p className="text-slate-500 max-w-xl mx-auto font-medium">Pilih paket yang sesuai dengan skala bisnis anda. Tanpa biaya tersembunyi, batalkan kapan saja.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          {plans.map((plan, i) => (
+            <motion.div 
+              key={i}
+              whileHover={{ y: -10 }}
+              className={`relative p-10 rounded-[3rem] border transition-all duration-500 flex flex-col h-full bg-white ${
+                plan.popular 
+                ? 'border-blue-500 shadow-2xl shadow-blue-500/10 scale-[1.02] z-10' 
+                : 'border-slate-200/60 hover:shadow-premium'
+              }`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg shadow-blue-500/30">
+                  Most Popular Choice
+                </div>
+              )}
+
+              <div className="mb-10">
+                <h4 className="text-xl font-display font-bold text-slate-900 mb-2">{plan.name}</h4>
+                <p className="text-sm text-slate-400 font-medium leading-relaxed">{plan.desc}</p>
+              </div>
+
+              <div className="mb-10 flex items-baseline gap-1">
+                <span className="text-sm font-bold text-slate-400">Rp</span>
+                <span className="text-5xl font-display font-bold text-slate-900 tracking-tight">{plan.price}</span>
+                <span className="text-sm font-bold text-slate-400">/bulan</span>
+              </div>
+
+              <div className="space-y-5 mb-12 flex-1">
+                {plan.features.map((feat, idx) => (
+                  <div key={idx} className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                    <CheckCircle2 size={18} className="text-green-500 shrink-0" />
+                    {feat}
+                  </div>
+                ))}
+              </div>
+
+              <Link 
+                to="/register" 
+                className={`w-full py-5 rounded-2xl font-bold text-sm text-center transition-all ${
+                  plan.popular 
+                  ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-900/10' 
+                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                }`}
+              >
+                {plan.cta}
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="mt-20 text-center">
+          <p className="text-sm font-medium text-slate-400">
+            Butuh solusi khusus untuk jaringan waralaba besar? <Link to="#" className="text-blue-600 font-bold hover:underline">Hubungi Tim Sales Kami</Link>
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export default function LandingPage() {
   return (
     <div className="bg-[#FAFAFA] font-sans">
@@ -465,6 +588,7 @@ export default function LandingPage() {
       <Hero />
       <TrustSection />
       <Features />
+      <Pricing />
       {/* Visual Break */}
       <section className="py-20 px-6">
          <div className="container mx-auto">

@@ -101,43 +101,70 @@ export default function Settings() {
             )}
 
             {activeTab === "billing" && (
-              <div className="p-8 space-y-8">
-                 <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
-                    <div>
-                       <p className="text-xs font-bold text-slate-400 uppercase">Current Plan</p>
-                       <h4 className="text-2xl font-bold text-slate-900 mt-1">PRO Annual Plan</h4>
-                       <p className="text-sm text-slate-500 mt-1">Next payment: $149.00 on Oct 24, 2026</p>
-                    </div>
-                    <button className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm">Manage Plan</button>
-                 </div>
-
-                 <div className="space-y-4">
-                    <h4 className="font-bold text-slate-900">Payment Methods</h4>
-                    <div className="p-4 border border-slate-100 rounded-2xl flex items-center justify-between">
-                       <div className="flex items-center gap-4">
-                          <div className="w-12 h-8 bg-slate-100 rounded flex items-center justify-center font-bold text-[10px]">VISA</div>
-                          <div>
-                             <p className="text-sm font-bold text-slate-900">Visa ending in 4242</p>
-                             <p className="text-xs text-slate-400">Expires 12/26</p>
-                          </div>
+              <div className="p-8 space-y-10">
+                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-8 bg-linear-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] text-white overflow-hidden relative shadow-2xl shadow-blue-500/20">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                    <div className="relative z-10">
+                       <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[9px] font-bold uppercase tracking-widest mb-4">
+                          Current Tier
                        </div>
-                       <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full">Default</span>
+                       <h4 className="text-3xl font-display font-bold mb-1">PRO Membership</h4>
+                       <p className="text-blue-100 text-sm font-medium">Your next billing cycle is on June 12, 2026.</p>
+                    </div>
+                    <div className="relative z-10 flex flex-col items-end">
+                       <div className="text-3xl font-display font-bold mb-1">Rp 199k<span className="text-sm font-normal opacity-60">/bln</span></div>
+                       <button className="px-6 py-3 bg-white text-blue-600 rounded-2xl text-xs font-bold hover:bg-blue-50 transition-all shadow-xl shadow-white/10">Manage Subscription</button>
                     </div>
                  </div>
 
-                 <div className="pt-8 border-t border-slate-50">
-                    <h4 className="font-bold text-slate-900 mb-4">Billing History</h4>
-                    <div className="space-y-4">
-                       {[1, 2, 3].map(i => (
-                         <div key={i} className="flex items-center justify-between text-sm py-2">
-                            <div className="flex items-center gap-3">
-                               <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center"><CreditCard size={14} className="text-slate-400" /></div>
-                               <span className="font-medium text-slate-600">Inv-202{i}-042</span>
-                            </div>
-                            <span className="text-slate-400">Oct 24, 202{3-i}</span>
-                            <span className="font-bold text-slate-900">$149.00</span>
+                 <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                       <h4 className="font-bold text-slate-900 uppercase tracking-widest text-[10px]">Tier Comparison</h4>
+                       <span className="text-[10px] font-bold text-blue-500 uppercase cursor-pointer hover:underline">Compare all features</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                       {[
+                         { name: 'Starter', price: '0', active: false },
+                         { name: 'Pro', price: '199k', active: true },
+                         { name: 'Enterprise', price: '499k', active: false }
+                       ].map((plan) => (
+                         <div key={plan.name} className={cn(
+                           "p-6 rounded-[2rem] border transition-all relative overflow-hidden",
+                           plan.active 
+                             ? "border-blue-500 bg-blue-50/30" 
+                             : "border-slate-100 bg-white hover:border-slate-300"
+                         )}>
+                            {plan.active && (
+                               <div className="absolute top-2 right-2 p-1.5 bg-blue-500 text-white rounded-full">
+                                  <Check size={10} strokeWidth={4} />
+                               </div>
+                            )}
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{plan.name}</div>
+                            <div className="text-xl font-display font-bold text-slate-900 mb-4">Rp {plan.price}</div>
+                            <button className={cn(
+                              "w-full py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                              plan.active 
+                                ? "bg-blue-600 text-white" 
+                                : "bg-slate-50 text-slate-400 hover:bg-slate-100"
+                            )}>
+                               {plan.active ? "Current Plan" : "Switch Tier"}
+                            </button>
                          </div>
                        ))}
+                    </div>
+                 </div>
+
+                 <div className="space-y-4 pt-4">
+                    <h4 className="font-bold text-slate-900 uppercase tracking-widest text-[10px]">Active Payment Method</h4>
+                    <div className="group p-6 border border-slate-100 hover:border-blue-200 rounded-[2rem] flex items-center justify-between bg-white transition-all">
+                       <div className="flex items-center gap-5">
+                          <div className="w-14 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400 italic text-[10px]">VISA</div>
+                          <div>
+                             <p className="text-sm font-bold text-slate-900 italic font-serif leading-none mb-1">•••• •••• •••• 4242</p>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Expires 12/2026 • Verified Partner</p>
+                          </div>
+                       </div>
+                       <button className="text-[10px] font-bold text-slate-300 hover:text-blue-500 uppercase tracking-widest">Update</button>
                     </div>
                  </div>
               </div>
