@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Rocket, ArrowRight, Mail, Lock, AlertCircle } from "lucide-react";
+import { Rocket, ArrowRight, Mail, Lock, AlertCircle, Sparkles } from "lucide-react";
 import { User } from "../types";
+import { motion } from "motion/react";
 
 interface LoginPageProps {
   onLogin: (user: User, token: string) => void;
@@ -30,66 +31,85 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         onLogin(data.user, data.token);
         navigate("/dashboard");
       } else {
-        setError(data.message || "Login failed");
+        setError(data.message || "Invalid credentials. Please try again.");
       }
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError("Unable to connect to service. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-              <Rocket size={24} />
+    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-6 font-sans relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-[-20%] right-[-10%] w-[60%] aspect-square bg-blue-500/5 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[50%] aspect-square bg-purple-500/5 rounded-full blur-[120px]" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-lg relative z-10"
+      >
+        <div className="text-center mb-12">
+          <Link to="/" className="inline-flex items-center gap-3 mb-8 group transition-transform hover:-rotate-1">
+            <div className="w-12 h-12 bg-linear-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-blue-500/20 rotate-3 group-hover:rotate-6 transition-transform">
+              <Rocket size={26} strokeWidth={2.5} />
             </div>
-            <span className="text-2xl font-bold tracking-tight">UMKM<span className="text-blue-500">Boost</span></span>
+            <span className="text-3xl font-display font-bold tracking-tight text-slate-900 leading-none">UMKM<span className="text-blue-600">Boost</span></span>
           </Link>
-          <h1 className="text-3xl font-bold text-slate-900">Welcome back</h1>
-          <p className="text-slate-500 mt-2">Login to manage your digital marketing</p>
+          <div className="flex items-center justify-center gap-2 mb-3 text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px]">
+             <Sparkles size={12} />
+             Secure Authentication
+          </div>
+          <h1 className="text-4xl font-serif font-medium tracking-tight text-slate-900 italic leading-tight">Welcome back <span className="not-italic font-bold">to Elite!</span></h1>
         </div>
 
-        <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100">
+        <div className="bg-white p-10 md:p-14 rounded-[3.5rem] shadow-premium border border-slate-200/60 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
+             <Rocket size={120} className="rotate-12" />
+          </div>
+
           {error && (
-            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl flex items-center gap-3 text-sm font-medium">
-              <AlertCircle size={18} />
-              {error}
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mb-8 p-5 bg-red-50 border border-red-100 text-red-600 rounded-[1.25rem] flex items-start gap-4 text-sm font-semibold"
+            >
+              <AlertCircle size={20} className="shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+          <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 underline underline-offset-4 decoration-blue-100 decoration-2">Identity Hub</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input 
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  placeholder="Email or Username"
+                  className="w-full pl-14 pr-6 py-5 bg-slate-50/50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 focus:bg-white transition-all text-sm font-semibold text-slate-900"
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between ml-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Password</label>
-                <Link to="/forgot-password" size={18} className="text-xs font-bold text-blue-500 hover:text-blue-600">Forgot password?</Link>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest underline underline-offset-4 decoration-blue-100 decoration-2">Protective Key</label>
+                <Link to="#" className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-widest">Recovery?</Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input 
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  placeholder="Password"
+                  className="w-full pl-14 pr-6 py-5 bg-slate-50/50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 focus:bg-white transition-all text-sm font-semibold text-slate-900"
                   required
                 />
               </div>
@@ -98,19 +118,25 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <button 
               type="submit" 
               disabled={isLoading}
-              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 active:scale-95 disabled:opacity-50"
+              className="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-2xl shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50"
             >
-              {isLoading ? "Signing In..." : "Sign In"} <ArrowRight size={20} />
+              {isLoading ? "Validating Session..." : "Access Platform"} 
+              <ArrowRight size={20} className="group-hover:translate-x-1" />
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-slate-50 text-center">
-            <p className="text-sm text-slate-500 font-medium">
-              Don't have an account? <Link to="/register" className="text-blue-500 font-bold hover:text-blue-600">Register for free</Link>
+          <div className="mt-12 pt-10 border-t border-slate-100 text-center">
+            <p className="text-[11px] font-bold text-slate-400 tracking-widest uppercase">
+              New to the ecosystem? <br className="sm:hidden" />
+              <Link to="/register" className="text-blue-600 hover:text-blue-700 underline underline-offset-4 decoration-2 ml-1">Build Your Profile</Link>
             </p>
           </div>
         </div>
-      </div>
+        
+        <div className="mt-12 text-center opacity-30 select-none pointer-events-none">
+           <p className="text-[9px] font-bold uppercase tracking-[0.5em] text-slate-400">© 2026 UMKMBoost • Encrypted End-to-End</p>
+        </div>
+      </motion.div>
     </div>
   );
 }
