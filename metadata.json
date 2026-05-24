@@ -2,5 +2,5 @@
   "name": "UMKMBoost - Digital Marketing Otomatis",
   "description": "Platform digital marketing otomatis berbasis AI yang dirancang khusus untuk membantu UMKM di Indonesia mengelola pemasaran digital dengan lebih mudah, cepat, dan efisien.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from "motion/react";
 interface DashboardLayoutProps {
   user: User;
   onLogout: () => void;
+  onUpdateUser: (updatedUser: User) => void;
 }
 
 const navItems = [
@@ -35,7 +36,7 @@ const navItems = [
   { name: "Settings", icon: SettingsIcon, path: "/dashboard/settings", color: "text-slate-500" },
 ];
 
-export default function DashboardLayout({ user, onLogout }: DashboardLayoutProps) {
+export default function DashboardLayout({ user, onLogout, onUpdateUser }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
 
@@ -134,17 +135,32 @@ export default function DashboardLayout({ user, onLogout }: DashboardLayoutProps
           </div>
 
           <div className="p-6 border-t border-slate-100">
-            <div className="relative p-5 bg-linear-to-br from-slate-900 to-slate-800 rounded-[2rem] mb-6 overflow-hidden group">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-1000" />
+            <div className={cn(
+              "relative p-5 rounded-[2rem] mb-6 overflow-hidden group border transition-all duration-300",
+              user.tier === "Starter" && "bg-slate-50 border-slate-200 text-slate-800",
+              user.tier === "Pro" && "bg-linear-to-br from-blue-600 to-indigo-700 text-white border-transparent shadow-lg shadow-blue-500/10",
+              user.tier === "Enterprise" && "bg-linear-to-br from-purple-800 to-indigo-900 text-white border-transparent shadow-lg shadow-purple-500/10"
+            )}>
+              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-1000" />
               <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center text-white">
+                  <div className={cn(
+                    "w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[10px]",
+                    user.tier === "Starter" ? "bg-slate-200 text-slate-700" : "bg-white/20 text-white"
+                  )}>
                     <Sparkles size={12} fill="currentColor" />
                   </div>
-                  <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Enterprise</span>
+                  <span className={cn(
+                    "text-[10px] font-bold uppercase tracking-widest",
+                    user.tier === "Starter" ? "text-slate-500" : "text-white/70"
+                  )}>{user.tier || "Pro"} Plan</span>
                 </div>
-                <div className="text-xs font-bold text-white mb-1">Premium Plan</div>
-                <div className="text-[10px] text-white/40 font-medium">Auto-renewals active</div>
+                <div className={cn("text-xs font-bold mb-1", user.tier === "Starter" ? "text-slate-900" : "text-white")}>
+                  {user.tier === "Starter" ? "Starter Tier" : user.tier === "Pro" ? "Pro Automation" : "Enterprise Suite"}
+                </div>
+                <div className={cn("text-[10px] font-medium opacity-80", user.tier === "Starter" ? "text-slate-500" : "text-white/65")}>
+                  {user.tier === "Starter" ? "10 drafts limit" : user.tier === "Pro" ? "1k WA, Unlimited drafts" : "Unlimited Access Active"}
+                </div>
               </div>
             </div>
             <button 
@@ -200,9 +216,19 @@ export default function DashboardLayout({ user, onLogout }: DashboardLayoutProps
                <div className="flex items-center gap-3">
                   <div className="text-right hidden sm:block">
                     <div className="text-sm font-bold text-slate-900 leading-none mb-1">{user.name}</div>
-                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 border border-blue-100">
-                       <div className="w-1 h-1 rounded-full bg-blue-500" />
-                       <span className="text-[9px] font-bold text-blue-600 uppercase tracking-tighter">Gold Tier</span>
+                    <div className={cn(
+                      "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px]",
+                      user.tier === "Starter" ? "bg-slate-100 border-slate-200 text-slate-700" :
+                      user.tier === "Pro" ? "bg-blue-50 border-blue-100 text-blue-600" :
+                      "bg-purple-50 border-purple-100 text-purple-600"
+                    )}>
+                       <div className={cn(
+                         "w-1 h-1 rounded-full animate-pulse",
+                         user.tier === "Starter" ? "bg-slate-400" :
+                         user.tier === "Pro" ? "bg-blue-500" :
+                         "bg-purple-500"
+                       )} />
+                       <span className="font-bold uppercase tracking-tighter">{user.tier || "Pro"} Plan</span>
                     </div>
                   </div>
                   <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold text-sm shadow-xl shadow-blue-500/20 rotate-1 flex-shrink-0">
@@ -222,7 +248,7 @@ export default function DashboardLayout({ user, onLogout }: DashboardLayoutProps
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
             className="max-w-7xl mx-auto"
           >
-            <Outlet />
+            <Outlet context={{ user, onUpdateUser }} />
           </motion.div>
         </main>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Rocket, ArrowRight, Mail, Lock, User, AlertCircle, Sparkles, ShieldCheck } from "lucide-react";
 import { User as UserType } from "../types";

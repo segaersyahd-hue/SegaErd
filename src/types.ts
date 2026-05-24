@@ -6,6 +6,7 @@ export interface User {
   name: string;
   role: UserRole;
   businessName?: string;
+  tier?: "Starter" | "Pro" | "Enterprise";
 }
 
 export interface AuthState {

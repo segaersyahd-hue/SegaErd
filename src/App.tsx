@@ -13,18 +13,44 @@ import Settings from "./pages/dashboard/Settings";
 import { AuthState, User } from "./types";
 
 export default function App() {
-  const [auth, setAuth] = useState<AuthState>({
-    user: null,
-    token: null,
-    isAuthenticated: false,
+  const [auth, setAuth] = useState<AuthState>(() => {
+    const saved = localStorage.getItem("umkm_boost_auth");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return {
+      user: null,
+      token: null,
+      isAuthenticated: false,
+    };
   });
 
   const handleLogin = (user: User, token: string) => {
-    setAuth({ user, token, isAuthenticated: true });
+    const userWithTier: User = {
+      ...user,
+      tier: user.tier || "Pro",
+      businessName: user.businessName || "Kedai Kopi Modern"
+    };
+    const newAuth = { user: userWithTier, token, isAuthenticated: true };
+    setAuth(newAuth);
+    localStorage.setItem("umkm_boost_auth", JSON.stringify(newAuth));
   };
 
   const handleLogout = () => {
     setAuth({ user: null, token: null, isAuthenticated: false });
+    localStorage.removeItem("umkm_boost_auth");
+  };
+
+  const handleUpdateUser = (updatedUser: User) => {
+    setAuth(prev => {
+      const newAuth = { ...prev, user: updatedUser };
+      localStorage.setItem("umkm_boost_auth", JSON.stringify(newAuth));
+      return newAuth;
+    });
   };
 
   return (
@@ -38,7 +64,11 @@ export default function App() {
         path="/dashboard" 
         element={
           auth.isAuthenticated ? (
-            <DashboardLayout user={auth.user!} onLogout={handleLogout} />
+            <DashboardLayout 
+              user={auth.user!} 
+              onLogout={handleLogout} 
+              onUpdateUser={handleUpdateUser} 
+            />
           ) : (
             <Navigate to="/login" />
           )

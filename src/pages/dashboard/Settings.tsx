@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 import { 
   User, 
   Shield, 
@@ -7,12 +8,27 @@ import {
   Globe, 
   Check,
   ChevronRight,
-  Camera
+  Camera,
+  Sparkles
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export default function Settings() {
+  const { user, onUpdateUser } = useOutletContext<{ 
+    user: any; 
+    onUpdateUser: (u: any) => void; 
+  }>();
+
   const [activeTab, setActiveTab] = useState("profile");
+
+  // Profile fields state
+  const [profileName, setProfileName] = useState(user?.name || "Andi Pratama");
+  const [businessName, setBusinessName] = useState(user?.businessName || "Kedai Kopi Modern");
+  const [email, setEmail] = useState(user?.email || "andi@kopimodern.com");
+  const [phone, setPhone] = useState("+62 812-3456-7890");
+  const [region, setRegion] = useState("Indonesia");
+  const [isSavedNotify, setIsSavedNotify] = useState(false);
+  const [changedTierSuccess, setChangedTierSuccess] = useState<string | null>(null);
 
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
@@ -52,6 +68,12 @@ export default function Settings() {
          <div className="flex-1 bg-white border border-slate-200 rounded-[2rem] shadow-xs overflow-hidden">
             {activeTab === "profile" && (
               <div className="p-8 space-y-8">
+                 {isSavedNotify && (
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-2xl text-green-800 text-xs font-bold leading-none flex items-center gap-2 animate-bounce">
+                       <Check size={14} className="stroke-[3]" />
+                       Profil berhasil disimpan dan diperbarui!
+                    </div>
+                 )}
                  <div className="flex items-center gap-6">
                     <div className="relative">
                        <div className="w-24 h-24 rounded-[2rem] bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-xl">
@@ -62,23 +84,23 @@ export default function Settings() {
                        </button>
                     </div>
                     <div>
-                       <h3 className="font-bold text-xl text-slate-900">Andi Pratama</h3>
-                       <p className="text-slate-500 text-sm">Owner of Kedai Kopi Modern</p>
+                       <h3 className="font-bold text-xl text-slate-900">{profileName}</h3>
+                       <p className="text-slate-500 text-sm">Owner of {businessName}</p>
                     </div>
                  </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Business Name</label>
-                       <input type="text" defaultValue="Kedai Kopi Modern" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition-all text-sm" />
+                       <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition-all text-sm" />
                     </div>
                     <div className="space-y-2">
                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                       <input type="email" defaultValue="andi@kopimodern.com" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition-all text-sm" />
+                       <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition-all text-sm" />
                     </div>
                     <div className="space-y-2">
                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
-                       <input type="text" defaultValue="+62 812-3456-7890" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition-all text-sm" />
+                       <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-blue-500 focus:bg-white transition-all text-sm" />
                     </div>
                     <div className="space-y-2">
                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Country / Region</label>
@@ -94,26 +116,42 @@ export default function Settings() {
                  </div>
 
                  <div className="pt-8 border-t border-slate-50 flex justify-end gap-3">
-                    <button className="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
-                    <button className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm shadow-xl shadow-slate-900/10 active:scale-95 transition-all">Save Changes</button>
+                    <button className="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-all" onClick={() => { setProfileName(user?.name || "Andi Pratama"); setBusinessName(user?.businessName || "Kedai Kopi Modern"); setEmail(user?.email || "andi@kopimodern.com"); }}>Reset</button>
+                    <button className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm shadow-xl shadow-slate-900/10 active:scale-95 transition-all hover:bg-slate-800" onClick={() => { onUpdateUser({ ...user, name: profileName, businessName: businessName, email: email }); setIsSavedNotify(true); setTimeout(() => setIsSavedNotify(false), 3000); }}>Save Changes</button>
                  </div>
               </div>
             )}
 
             {activeTab === "billing" && (
               <div className="p-8 space-y-10">
-                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-8 bg-linear-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] text-white overflow-hidden relative shadow-2xl shadow-blue-500/20">
+                 {changedTierSuccess && (
+                    <div className="p-4 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-xs font-bold leading-none flex items-center gap-3 animate-ping-once shadow-md">
+                       <Sparkles size={16} className="animate-pulse text-yellow-300" />
+                       <span>{changedTierSuccess}</span>
+                    </div>
+                 )}
+                 <div className={cn(
+                    "flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-8 rounded-[2.5rem] text-white overflow-hidden relative shadow-2xl transition-all duration-300",
+                    (user?.tier === "Starter") && "bg-linear-to-br from-slate-700 to-slate-900 shadow-slate-900/10",
+                    (!user?.tier || user?.tier === "Pro") && "bg-linear-to-br from-blue-600 to-indigo-700 shadow-blue-500/20",
+                    (user?.tier === "Enterprise") && "bg-linear-to-br from-purple-800 to-indigo-900 shadow-purple-500/20"
+                 )}>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
                     <div className="relative z-10">
                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[9px] font-bold uppercase tracking-widest mb-4">
                           Current Tier
                        </div>
-                       <h4 className="text-3xl font-display font-bold mb-1">PRO Membership</h4>
-                       <p className="text-blue-100 text-sm font-medium">Your next billing cycle is on June 12, 2026.</p>
+                       <h4 className="text-3xl font-display font-bold mb-1">{(user?.tier || "PRO").toUpperCase()} Membership</h4>
+                       <p className="text-blue-100/80 text-sm font-medium">
+                          {user?.tier === "Starter" ? "Gratis selamanya untuk pelaku usaha pemula." : "Siklus tagihan berikutnya pada tanggal 24 June 2026."}
+                       </p>
                     </div>
-                    <div className="relative z-10 flex flex-col items-end">
-                       <div className="text-3xl font-display font-bold mb-1">Rp 199k<span className="text-sm font-normal opacity-60">/bln</span></div>
-                       <button className="px-6 py-3 bg-white text-blue-600 rounded-2xl text-xs font-bold hover:bg-blue-50 transition-all shadow-xl shadow-white/10">Manage Subscription</button>
+                    <div className="relative z-10 flex flex-col items-end shrink-0">
+                       <div className="text-3xl font-display font-bold mb-1">
+                          {user?.tier === "Starter" ? "Rp 0" : user?.tier === "Enterprise" ? "Rp 499k" : "Rp 199k"}
+                          <span className="text-sm font-normal opacity-60">/bln</span>
+                       </div>
+                       <button className="px-6 py-3 bg-white text-slate-900 rounded-2xl text-xs font-bold hover:bg-slate-50 transition-all shadow-xl shadow-white/5 font-sans">Kelola Paket</button>
                     </div>
                  </div>
 
@@ -124,11 +162,13 @@ export default function Settings() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                        {[
-                         { name: 'Starter', price: '0', active: false },
-                         { name: 'Pro', price: '199k', active: true },
-                         { name: 'Enterprise', price: '499k', active: false }
-                       ].map((plan) => (
-                         <div key={plan.name} className={cn(
+                         { name: 'Starter', price: '0', active: user?.tier === "Starter" },
+                         { name: 'Pro', price: '199k', active: !user?.tier || user?.tier === "Pro" },
+                         { name: 'Enterprise', price: '499k', active: user?.tier === "Enterprise" }
+                       ].map((plan) => {
+                          const planActive = plan.name === (user?.tier || "Pro");
+                          return (
+                         <div key={plan.name} onClick={() => { if (!plan.active) { onUpdateUser({ ...user, tier: plan.name }); setChangedTierSuccess("Paket berhasil diubah ke " + plan.name + "!"); setTimeout(() => setChangedTierSuccess(null), 4000); } }} className={cn(
                            "p-6 rounded-[2rem] border transition-all relative overflow-hidden",
                            plan.active 
                              ? "border-blue-500 bg-blue-50/30" 
@@ -150,7 +190,8 @@ export default function Settings() {
                                {plan.active ? "Current Plan" : "Switch Tier"}
                             </button>
                          </div>
-                       ))}
+                       )
+                       })}
                     </div>
                  </div>
 

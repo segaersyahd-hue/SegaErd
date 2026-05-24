@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { 
   TrendingUp, 
   Users, 
@@ -11,8 +12,13 @@ import {
   Layout,
   Plus,
   RefreshCw,
-  MoreHorizontal
+  MoreHorizontal,
+  ArrowRight,
+  Lock,
+  Sparkles,
+  Calendar
 } from "lucide-react";
+import { useOutletContext, Link } from "react-router-dom";
 import { 
   AreaChart, 
   Area, 
@@ -80,6 +86,109 @@ const activities = [
 ];
 
 export default function DashboardOverview() {
+  const { user } = useOutletContext<{ user: any }>();
+  
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [campaignsList, setCampaignsList] = useState<any[]>([]);
+  const [drafts, setDrafts] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [resSchedules, resCampaigns, resDrafts] = await Promise.all([
+        fetch("/api/schedules").then(r => r.json()),
+        fetch("/api/campaigns").then(r => r.json()),
+        fetch("/api/drafts").then(r => r.json())
+      ]);
+      if (resSchedules?.success) setSchedules(resSchedules.data);
+      if (resCampaigns?.success) setCampaignsList(resCampaigns.data);
+      if (resDrafts?.success) setDrafts(resDrafts.data);
+    } catch (err) {
+      console.error("Error loading dashboard data", err);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const activeTier = user?.tier || "Pro";
+
+  const totalSent = campaignsList.reduce((acc, c) => acc + (c.sent || 0), 0);
+  const calculatedImpressionsVal = (142.4 + totalSent / 1000 + schedules.length * 1.5).toFixed(1) + "K";
+
+  const totalOpened = campaignsList.reduce((acc, c) => acc + (c.opened || 0), 0);
+  const calculatedEngagementVal = (28.5 + totalOpened / 1000 + schedules.length * 0.4).toFixed(1) + "K";
+
+  const activeCampaignsCount = campaignsList.filter(c => c.status !== "draft").length;
+  const calculatedLeadsVal = Math.floor(412 + activeCampaignsCount * 18 + schedules.length * 4.2).toString();
+
+  const calculatedRoiVal = activeTier === "Starter" ? "1.2x" : activeTier === "Pro" ? "4.8x" : "12.4x";
+
+  const calculatedStats = [
+    { 
+      label: "Impressions", 
+      value: calculatedImpressionsVal, 
+      change: "+12.5%", 
+      trend: "up", 
+      icon: TrendingUp, 
+      color: "blue" 
+    },
+    { 
+      label: "Engagement", 
+      value: calculatedEngagementVal, 
+      change: "+24.2%", 
+      trend: "up", 
+      icon: Users, 
+      color: "purple" 
+    },
+    { 
+      label: "Leads Gen", 
+      value: calculatedLeadsVal, 
+      change: "+4.1%", 
+      trend: "up", 
+      icon: MessageCircle, 
+      color: "green" 
+    },
+    { 
+      label: "Avg. ROI", 
+      value: calculatedRoiVal, 
+      change: "+5.4%", 
+      trend: "up", 
+      icon: DollarSign, 
+      color: "orange" 
+    },
+  ];
+
+  const userActivities = [
+    ...drafts.map(d => ({
+      id: "dr-" + d.id,
+      title: `AI Caption draf: "${d.title}"`,
+      time: "Baru saja",
+      type: "ai"
+    })),
+    ...campaignsList.map(c => ({
+      id: "ca-" + c.id,
+      title: `WhatsApp Campaign: "${c.name}" (${c.status})`,
+      time: c.date === "Today" ? "Hari ini" : c.date,
+      type: "wa"
+    })),
+    ...schedules.map(s => ({
+      id: "sc-" + s.id,
+      title: `${s.platform.toUpperCase()} Post scheduled: "${s.title}"`,
+      time: `Tgl ${s.date} • ${s.time} WIB`,
+      type: "social"
+    }))
+  ];
+
+  const finalActivities = userActivities.length > 0 ? userActivities.slice(0, 5) : [
+    { id: "act-1", title: "AI Caption generated for 'Promo June'", time: "2 mins ago", type: "ai" },
+    { id: "act-2", title: "WhatsApp Broadcast 'Welcome' sent", time: "1 hour ago", type: "wa" },
+    { id: "act-3", title: "Instagram Post scheduled for tomorrow", time: "4 hours ago", type: "social" },
+  ];
+
   return (
     <div className="space-y-10 pb-16">
       {/* Welcome Header */}
@@ -89,8 +198,22 @@ export default function DashboardOverview() {
               <Layout size={12} />
               Platform Overview
            </div>
-           <h1 className="text-4xl font-serif font-medium tracking-tight text-slate-900 mb-2">Welcome back, <span className="italic">Andi!</span></h1>
-           <p className="text-sm text-slate-500 font-medium">Monitoring your marketing ecosystem per <span className="text-slate-900 underline decoration-blue-500 underline-offset-4">May 20, 2026</span>.</p>
+           <div className="flex items-center flex-wrap gap-3 mb-2">
+              <h1 className="text-4xl font-serif font-medium tracking-tight text-slate-900">
+                Welcome back, <span className="italic">{user?.name || "Andi"}!</span>
+              </h1>
+              <span className={cn(
+                "px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border shadow-xs select-none",
+                activeTier === "Starter" && "bg-slate-100 text-slate-600 border-slate-200",
+                activeTier === "Pro" && "bg-blue-50 text-blue-600 border-blue-200 animate-pulse",
+                activeTier === "Enterprise" && "bg-purple-50 text-purple-600 border-purple-200"
+              )}>
+                {activeTier} Plan
+              </span>
+           </div>
+           <p className="text-sm text-slate-500 font-medium font-sans">
+             Monitoring your {activeTier === "Starter" ? "starter" : activeTier === "Pro" ? "pro automation" : "enterprise marketing"} ecosystem per <span className="text-slate-900 underline decoration-blue-500 underline-offset-4 font-mono font-bold text-xs">May 24, 2026</span>.
+           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
@@ -106,7 +229,7 @@ export default function DashboardOverview() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
+        {calculatedStats.map((stat, i) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
@@ -288,6 +411,83 @@ export default function DashboardOverview() {
             </div>
           </div>
 
+          {/* Plan Quotas Card */}
+          <div className="bg-white p-8 rounded-[3rem] border border-slate-200/60 shadow-premium">
+             <div className="flex items-center justify-between mb-6">
+                <div className="font-bold text-slate-900 uppercase tracking-widest text-[10px]">Kapasitas &amp; Kuota Paket</div>
+                <Link to="/dashboard/settings" className="text-[10px] font-bold text-blue-600 uppercase hover:underline">Kelola</Link>
+             </div>
+             <div className="space-y-5">
+                {/* AI Generation Quota */}
+                <div>
+                   <div className="flex justify-between items-center mb-1.5 text-xs">
+                      <span className="font-bold text-slate-700">AI Content Credits</span>
+                      <span className="font-mono font-bold text-slate-900 font-sans">
+                         {activeTier === "Starter" ? `${drafts.length} / 10` : `${drafts.length} / ∞`}
+                      </span>
+                   </div>
+                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                         className="h-full bg-indigo-600 rounded-full transition-all duration-500" 
+                         style={{ width: activeTier === "Starter" ? `${Math.min(100, (drafts.length / 10) * 100)}%` : "100%" }} 
+                      />
+                   </div>
+                   <div className="text-[9px] text-slate-400 mt-1 font-medium font-sans">
+                      {activeTier === "Starter" ? `Tersisa ${Math.max(0, 10 - drafts.length)} generasi draf gratis.` : `Generasi draf unlimited aktif! (${drafts.length} dibuat)`}
+                   </div>
+                </div>
+
+                {/* WhatsApp Broadcast Quota */}
+                <div>
+                   <div className="flex justify-between items-center mb-1.5 text-xs">
+                      <span className="font-bold text-slate-700">WhatsApp Broadcast</span>
+                      <span className="font-mono font-bold text-slate-900 font-sans">
+                         {activeTier === "Starter" ? "0 / 0" : activeTier === "Pro" ? `${totalSent} / 2,000` : `${totalSent} / ∞`}
+                      </span>
+                   </div>
+                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                         className="h-full bg-green-500 rounded-full transition-all duration-500" 
+                         style={{ width: activeTier === "Starter" ? "0%" : activeTier === "Pro" ? `${Math.min(100, (totalSent / 2000) * 100)}%` : "100%" }} 
+                      />
+                   </div>
+                   <div className="text-[9px] text-slate-400 mt-1 font-medium font-sans">
+                      {activeTier === "Starter" ? "Fitur WhatsApp dinonaktifkan di plan Starter." : activeTier === "Pro" ? `Tersisa ${Math.max(0, 2000 - totalSent)} siaran bulan ini.` : `Pesan siaran tanpa batas aktif! (${totalSent} terkirim)`}
+                   </div>
+                </div>
+
+                {/* Social Channels connected */}
+                <div>
+                   <div className="flex justify-between items-center mb-1.5 text-xs">
+                      <span className="font-bold text-slate-700">Sosial Media Terhubung</span>
+                      <span className="font-mono font-bold text-slate-900 font-sans">
+                         {activeTier === "Starter" ? "1 / 1" : activeTier === "Pro" ? `${Math.min(5, Math.max(1, schedules.length))} / 5` : `${Math.max(3, schedules.length)} / ∞`}
+                      </span>
+                   </div>
+                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                         className="h-full bg-blue-500 rounded-full transition-all duration-500" 
+                         style={{ width: activeTier === "Starter" ? "100%" : activeTier === "Pro" ? `${(Math.min(5, Math.max(1, schedules.length)) / 5) * 100}%` : "100%" }} 
+                      />
+                   </div>
+                   <div className="text-[9px] text-slate-400 mt-1 font-medium font-sans">
+                      {activeTier === "Starter" ? "Hubungkan akun sosial media utama Anda." : activeTier === "Pro" ? "Situs tersambung hingga 5 saluran sosial." : "Hubungkan saluran sosial tak terbatas!"}
+                   </div>
+                </div>
+             </div>
+
+             {activeTier !== "Enterprise" && (
+                <div className="mt-6 pt-6 border-t border-slate-100">
+                   <Link 
+                      to="/dashboard/settings" 
+                      className="w-full py-4 bg-linear-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white rounded-2xl text-center font-bold text-[10px] uppercase tracking-wider block transition-all shadow-xl shadow-blue-500/10 hover:translate-y-[-1px]"
+                   >
+                      Upgrade ke {activeTier === "Starter" ? "PRO" : "ENTERPRISE"}
+                   </Link>
+                </div>
+             )}
+          </div>
+
           {/* Quick Tasks */}
           <div className="bg-white p-8 rounded-[3rem] border border-slate-200/60 shadow-premium">
              <div className="flex items-center justify-between mb-8">
@@ -295,7 +495,7 @@ export default function DashboardOverview() {
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
              </div>
              <div className="space-y-6">
-                {activities.map((act) => (
+                {finalActivities.map((act) => (
                   <div key={act.id} className="flex gap-4 group cursor-pointer">
                      <div className={cn(
                         "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-all duration-300",

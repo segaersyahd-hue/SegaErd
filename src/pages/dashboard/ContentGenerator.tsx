@@ -13,13 +13,15 @@ import {
   Layout,
   History,
   Languages,
-  PenTool
+  PenTool,
+  ArrowRight
 } from "lucide-react";
-import { GoogleGenAI } from "@google/genai";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../../lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export default function ContentGenerator() {
+  const navigate = useNavigate();
   const [businessType, setBusinessType] = useState("");
   const [tone, setTone] = useState("Professional");
   const [prompt, setPrompt] = useState("");
@@ -27,33 +29,95 @@ export default function ContentGenerator() {
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Draft & Scheduling state
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleTitle, setScheduleTitle] = useState("");
+  const [schedulePlatform, setSchedulePlatform] = useState<"instagram" | "facebook" | "tiktok">("instagram");
+  const [scheduleTime, setScheduleTime] = useState("19:00");
+  const [scheduleDate, setScheduleDate] = useState("24");
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+
   const handleGenerate = async () => {
     if (!businessType || !prompt) return;
     
     setIsGenerating(true);
     setGeneratedContent(null);
+    setDraftSaved(false);
 
     try {
-      // In this environment, GEMINI_API_KEY is handled via process.env
-      const ai = new GoogleGenAI(process.env.GEMINI_API_KEY!);
-      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
-      const generationPrompt = `Kamu adalah spesialis digital marketing untuk UMKM Indonesia. 
-        Buatkan 3 opsi caption media sosial (Instagram/TikTok), hashtag populer, dan ide visual untuk promosi berikut:
-        Jenis Bisnis: ${businessType}
-        Tone: ${tone}
-        Topik Promosi: ${prompt}
-        
-        Berikan jawaban dalam format yang rapi dan menarik dengan pemisahan opsi yang jelas (Opsi 1, Opsi 2, Opsi 3).`;
-
-      const result = await model.generateContent(generationPrompt);
-      const response = await result.response;
-      setGeneratedContent(response.text() || "Failed to generate content.");
+      const response = await fetch("/api/content/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessType, tone, prompt }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setGeneratedContent(data.text || "Failed to generate content.");
+        setScheduleTitle(`Promo ${businessType}`);
+      } else {
+        setGeneratedContent(data.message || "Maaf, terjadi kesalahan saat menghubungkan ke AI.");
+      }
     } catch (error) {
       console.error(error);
-      setGeneratedContent("Maaf, terjadi kesalahan saat menghubungkan ke AI. Pastikan API Key sudah terpasang di environment.");
+      setGeneratedContent("Maaf, terjadi kesalahan saat menghubungkan ke AI. Silakan coba kembali.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!generatedContent) return;
+    setIsSavingDraft(true);
+    try {
+      const response = await fetch("/api/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `Hasil Generator ${businessType || "UMKM"}`,
+          content: generatedContent,
+          hashtags: ["#umkm", "#otomatis", `#${businessType.toLowerCase().replace(/\s+/g, "")}`],
+          platform: "instagram"
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setDraftSaved(true);
+        setTimeout(() => setDraftSaved(false), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  const handleSaveSchedule = async () => {
+    if (!generatedContent) return;
+    setIsSavingSchedule(true);
+    try {
+      const response = await fetch("/api/schedules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: schedulePlatform,
+          time: scheduleTime,
+          title: scheduleTitle || `Promo ${businessType}`,
+          date: Number(scheduleDate),
+          content: generatedContent
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setShowScheduleModal(false);
+        navigate("/dashboard/scheduler");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingSchedule(false);
     }
   };
 
@@ -247,21 +311,124 @@ export default function ContentGenerator() {
                 <div className="p-8 lg:p-12 border-t border-slate-100 bg-white shadow-2xl relative z-10">
                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                       <div className="flex items-center gap-4">
-                         <div className="w-12 h-12 bg-linear-to-br from-green-400 to-green-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/20">
-                            <Send size={20} />
-                         </div>
+                         <button
+                           onClick={handleSaveDraft}
+                           disabled={isSavingDraft}
+                           className={cn(
+                             "px-6 py-4 rounded-2xl font-bold text-sm border transition-all active:scale-95 flex items-center gap-2",
+                             draftSaved 
+                               ? "bg-green-50 border-green-200 text-green-600" 
+                               : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                           )}
+                         >
+                           {isSavingDraft ? "Menyimpan..." : draftSaved ? <><Check size={16} /> Tersimpan!</> : "Simpan Draf"}
+                         </button>
                          <div>
-                            <div className="text-sm font-bold text-slate-900">Direct Publication</div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Connect to social accounts</div>
+                            <div className="text-xs font-bold text-slate-900">Digital Asset Vault</div>
+                            <div className="text-[9px] text-slate-400">Save to your generated draft database</div>
                          </div>
                       </div>
-                      <button className="w-full sm:w-auto px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm tracking-tight hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3">
+                      <button 
+                        onClick={() => setShowScheduleModal(true)}
+                        className="w-full sm:w-auto px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm tracking-tight hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 active:scale-95"
+                      >
                          Proceed to Scheduler
                          <ArrowRight size={18} />
                       </button>
                    </div>
                 </div>
               )}
+
+              {/* Scheduling Modal */}
+              <AnimatePresence>
+                {showScheduleModal && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0.95, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.95, y: 20 }}
+                      className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl max-w-md w-full p-8 space-y-6"
+                    >
+                      <div>
+                        <h3 className="text-xl font-display font-bold text-slate-900">Jadwalkan Konten</h3>
+                        <p className="text-slate-500 text-xs mt-1">Sesuaikan pengaturan penerbitan otomatis konten Anda.</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Judul Postingan</label>
+                          <input 
+                            type="text" 
+                            value={scheduleTitle} 
+                            onChange={(e) => setScheduleTitle(e.target.value)}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none text-sm font-semibold text-slate-900"
+                            placeholder="Judul Promo"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Platform</label>
+                            <select 
+                              value={schedulePlatform} 
+                              onChange={(e) => setSchedulePlatform(e.target.value as any)}
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none text-sm font-semibold text-slate-900"
+                            >
+                              <option value="instagram">Instagram</option>
+                              <option value="facebook">Facebook</option>
+                              <option value="tiktok">TikTok</option>
+                            </select>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Waktu Post</label>
+                            <input 
+                              type="text" 
+                              value={scheduleTime} 
+                              onChange={(e) => setScheduleTime(e.target.value)}
+                              placeholder="e.g. 19:30"
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none text-sm font-semibold text-slate-900"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tanggal (Mei 2026)</label>
+                          <input 
+                            type="number" 
+                            min="1" 
+                            max="31"
+                            value={scheduleDate} 
+                            onChange={(e) => setScheduleDate(e.target.value)}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none text-sm font-semibold text-slate-900"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
+                        <button 
+                          onClick={() => setShowScheduleModal(false)}
+                          className="px-5 py-3 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-all"
+                        >
+                          Batal
+                        </button>
+                        <button 
+                          onClick={handleSaveSchedule}
+                          disabled={isSavingSchedule}
+                          className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-40"
+                        >
+                          {isSavingSchedule ? "Menyimpan..." : "Simpan & Jadwalkan"}
+                        </button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Decorative Corner */}
               <div className="absolute top-0 right-0 p-8 flex flex-col gap-2 opacity-5 pointer-events-none">
